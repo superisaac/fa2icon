@@ -22,6 +22,7 @@ class Options(object):
     file_tmpl = '%s.png'
     dest_dir = 'icons'
     color = 'white'
+    whitelist = None
 
 options = Options()
 
@@ -74,15 +75,15 @@ def usage():
     print ' --size=<size>\t\tThe canvas size of generated images, default 100'
     print ' -d|--dir=<dir>\t\tThe directory where generated images stores, default ./icons'
     print ' --filetmpl=<tmpl>\tThe filename template, default %s.png'
+    print ' -w|--whitelist=<falist>\tA comma separated fa name list to generate'
 
 def parse_command_line():
     try:
         opts, args = getopt.getopt(
-            sys.argv[1:], 'hvd:c:',
+            sys.argv[1:], 'hvd:c:w:',
             ['help', 'update', 'verbose',
              'size=', 'filetmpl=', 'dir=',
-             'color='])
-
+             'color=', 'whitelist='])
     except getopt.GetoptError as err:
         print str(err)
         usage()
@@ -102,17 +103,24 @@ def parse_command_line():
             options.file_tmpl = v
         elif o in ('--dir', '-d'):
             options.dest_dir = v
-        elif o in ('-c', '--color='):
+        elif o in ('-c', '--color'):
             options.color = v
+        elif o in ('-w', '--whitelist'):
+            options.whitelist = set(v.split(','))
 
 def main():
     parse_command_line()
+    print options.whitelist
     update(options.update)
     if not os.path.isdir(options.dest_dir):
         if options.verbose:
             print 'prepare data dir', options.dest_dir
         os.makedirs(options.dest_dir)
+
     for faname, content_ord in parse_css():
+        if options.whitelist is not None and (faname not in options.whitelist):
+            continue
+            
         u = unichr(content_ord)
         if options.verbose:
             print 'generating', faname
